@@ -1,6 +1,7 @@
 #include <stdlib.h>
+#include <stdio.h>
 
 int main(){
-    printf("%d", 5);
+    printf("%s", "Hello, World!");
     return 0;
 }
