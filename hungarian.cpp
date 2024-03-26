@@ -19,9 +19,9 @@ class graph{
         c_size = cities[0].size();
         printf("%d %d\n", r_size, c_size);
         vector<float> temp_vec;
-        float min=99999;
 
         for(int x = 0; x < r_size; x++){
+            float min=99999;
             for(int y = 0; y < c_size; y++){
                 //add to adjacency matrix
                 if(min > cities[x][y]){
@@ -49,20 +49,21 @@ class graph{
         //subtract row minimum
         for(int y = 0; y < r_size; y++){
             for(int x = 0; x < c_size; x++){
-                adj_matrix[x][y] = adj_matrix[x][y] - row_mins[y];
+                adj_matrix[y][x] = adj_matrix[y][x] - row_mins[y];
             }
         }
                
         //get column minimums
-        for(int x = 0; x < r_size; x++){
+        
+        for(int x = 0; x < c_size; x++){
             float temp_min = 99999;
-            for(int y = 0; y < c_size; y++){
-                if(adj_matrix[x][y] < temp_min){
-                    temp_min = adj_matrix[x][y];
+            for(int y = 0; y < r_size; y++){
+                if(adj_matrix[y][x] < temp_min){
+                    temp_min = adj_matrix[y][x];
                 }
             }
-            for(int y = 0; y < adj_matrix.size(); y++){
-                adj_matrix[x][y] = adj_matrix[x][y] - temp_min;
+            for(int y = 0; y < r_size; y++){
+                adj_matrix[y][x] = adj_matrix[y][x] - temp_min;
             }
           }
         }
@@ -126,7 +127,7 @@ vector<vector<float>> random_map_generator(int size, int max_distance){
 int main(){
     vector<vector<float>> map = {{1,2,3},
                                  {3,1,6},
-                                 {7,4,2},
+                                 {7,2,4},
                                  {8,5,7}};
     graph g1 = graph(map);
     g1.printMatrix();
