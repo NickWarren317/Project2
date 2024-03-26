@@ -9,8 +9,13 @@ class graph{
     vector<vector<float>> adj_matrix;
 
     vector<float> row_mins;
+
+    vector<int> Zrows, Zcols;
+
     int r_size;
     int c_size;
+
+    int num_zeroes;
 
 
     graph(vector<vector<float>> cities){
@@ -19,6 +24,11 @@ class graph{
         c_size = cities[0].size();
         printf("%d %d\n", r_size, c_size);
         vector<float> temp_vec;
+        num_zeroes = 0;
+
+        Zrows = vector<int>(c_size,0);
+        Zcols = vector<int>(r_size,0);
+
 
         for(int x = 0; x < r_size; x++){
             float min=99999;
@@ -64,19 +74,68 @@ class graph{
             }
             for(int y = 0; y < r_size; y++){
                 adj_matrix[y][x] = adj_matrix[y][x] - temp_min;
+                if(adj_matrix[y][x] == 0){
+                    num_zeroes++;
+                    Zrows[y]++;
+                    Zcols[x]++;
+                }
             }
           }
         }
+        int zeroCover(){
+            int ans = 0;
+            vector<bool> markedRows(c_size,false);
+            vector<bool> markedCols(r_size,false);
+            
+            int currentZ = num_zeroes; 
+
+            while(currentZ > 0){
+                bool workFlag = false;
+                for(int r = 0; r < c_size; r++){
+                    if(Zrows[r] == 1 && !markedRows[r]){
+                        markedCols[r] = true;
+                        //add to set?
+                        workFlag = true;
+                        printf("Marking col %d\n",r);
+                        currentZ = currentZ - Zcols[r];
+                        Zcols[r] = 0;
+                        ans++;
+                    }
+                }
+                for(int c = 0; c < r_size; c++){
+                    if(Zcols[c] == 1 && !markedCols[c]){
+                        markedRows[c] = true;
+                        //add to set?
+                        workFlag = true;
+                        printf("Marking row %d\n",c);
+                        currentZ = currentZ - Zrows[c];
+                        ans++;
+                    }
+                }
+                if(workFlag){
+                    for(int i = 0; i < Zcols.size(); i++){
+                        if(Zcols[i] > 1 && !markedCols[i] && currentZ > 0){
+                            markedCols[i] = true;
+                            printf("Marking col %d\n",i);
+                            currentZ = currentZ - Zcols[i];
+                            Zcols[i] = 0;
+                            ans++;
+                        }
+                    }
+                    for(int i = 0; i < Zrows.size(); i++){
+                        if(Zrows[i] > 1 && !markedRows[i] && currentZ > 0){
+                            markedCols[i] = true;
+                            printf("Marking row %d\n",i);
+                            currentZ = currentZ - Zrows[i];
+                            ans++;
+                        }
+                    }
+                }
+            }
+            printf("%d\n",ans);
+            return ans;
+        }
     };
-
-
-
-int zeroCover(vector<vector<float>> & graph){
-    int ans = 0;
-    //cover them zeroes
-
-    return ans;
-}
 
 void replaceZeroes(vector<vector<float>> * graph){
     //take lowest uncovered and add it to the intersected nodes
@@ -125,13 +184,17 @@ vector<vector<float>> random_map_generator(int size, int max_distance){
 }
 
 int main(){
-    vector<vector<float>> map = {{1,2,3},
-                                 {3,1,6},
-                                 {7,2,4},
-                                 {8,5,7}};
+    vector<vector<float>> map = {{1,2,3,4,5},
+                                 {3,1,6,9,2},
+                                 {7,2,4,12,5},
+                                 {8,5,7,3,7}};
     graph g1 = graph(map);
     g1.printMatrix();
     g1.minimizeGraph();
     g1.printMatrix();
+    g1.zeroCover();
+
+    printf("%d %d\n", g1.num_zeroes,g1.Zcols[1]);
+
     return 0;
 }
