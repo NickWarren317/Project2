@@ -3,7 +3,7 @@
 #include <stdlib.h>
 
 using namespace std;
-class graph{
+class graph {
   public:
     //adjacenecy matrix for flow rates between nodes
     vector<vector<float>> adj_matrix;
@@ -12,27 +12,27 @@ class graph{
 
     vector<int> Zrows, Zcols;
 
-    int r_size;
-    int c_size;
+    int y_size;
+    int x_size;
 
     int num_zeroes;
 
 
     graph(vector<vector<float>> cities){
         //hold rows and columns
-        r_size = cities.size();
-        c_size = cities[0].size();
-        printf("%d %d\n", r_size, c_size);
+        y_size = cities.size();
+        x_size = cities[0].size();
+        printf("%d %d\n", y_size, x_size);
         vector<float> temp_vec;
         num_zeroes = 0;
 
-        Zrows = vector<int>(c_size,0);
-        Zcols = vector<int>(r_size,0);
+        Zrows = vector<int>(x_size,0);
+        Zcols = vector<int>(y_size,0);
 
 
-        for(int x = 0; x < r_size; x++){
+        for(int x = 0; x < y_size; x++){
             float min=99999;
-            for(int y = 0; y < c_size; y++){
+            for(int y = 0; y < x_size; y++){
                 //add to adjacency matrix
                 if(min > cities[x][y]){
                     min = cities[x][y];
@@ -47,8 +47,8 @@ class graph{
     }
     void printMatrix(){
         printf("\n");
-        for(int x = 0; x < r_size; x++){
-            for(int y = 0; y < c_size; y++){
+        for(int x = 0; x < y_size; x++){
+            for(int y = 0; y < x_size; y++){
                 printf("%3.2f ", adj_matrix[x][y]);
             }
             printf("\n");
@@ -57,22 +57,22 @@ class graph{
     }
     void minimizeGraph(){
         //subtract row minimum
-        for(int y = 0; y < r_size; y++){
-            for(int x = 0; x < c_size; x++){
+        for(int y = 0; y < y_size; y++){
+            for(int x = 0; x < x_size; x++){
                 adj_matrix[y][x] = adj_matrix[y][x] - row_mins[y];
             }
         }
                
         //get column minimums
         
-        for(int x = 0; x < c_size; x++){
+        for(int x = 0; x < x_size; x++){
             float temp_min = 99999;
-            for(int y = 0; y < r_size; y++){
+            for(int y = 0; y < y_size; y++){
                 if(adj_matrix[y][x] < temp_min){
                     temp_min = adj_matrix[y][x];
                 }
             }
-            for(int y = 0; y < r_size; y++){
+            for(int y = 0; y < y_size; y++){
                 adj_matrix[y][x] = adj_matrix[y][x] - temp_min;
                 if(adj_matrix[y][x] == 0){
                     num_zeroes++;
@@ -82,58 +82,85 @@ class graph{
             }
           }
         }
+
         int zeroCover(){
             int ans = 0;
-            vector<bool> markedRows(c_size,false);
-            vector<bool> markedCols(r_size,false);
+            vector<bool> markedRows(y_size,false);
+            vector<bool> markedCols(x_size,false);
             
-            int currentZ = num_zeroes; 
+            bool zeroesFound = true;
 
-            while(currentZ > 0){
+            while(zeroesFound){
                 bool workFlag = false;
-                for(int r = 0; r < c_size; r++){
+                zeroesFound = false;
+                //iterate rows checking for exactly one unmarked zero.
+                for(int r = 0; r < y_size; r++){
                     if(Zrows[r] == 1 && !markedRows[r]){
-                        markedCols[r] = true;
-                        //add to set?
-                        workFlag = true;
-                        printf("Marking col %d\n",r);
-                        currentZ = currentZ - Zcols[r];
-                        Zcols[r] = 0;
-                        ans++;
+                      for(int c = 0; c < x_size; c++){
+                        if(adj_matrix[r][c] == 0 && !markedCols[c]){
+                            for(int i = 0; i < y_size; i++) if(adj_matrix[i][c] == 0) Zrows[i]--;
+                            markedCols[c] = true;
+                            workFlag = true;
+                            printf("Marking col %d\n",c);
+                            zeroesFound = true;
+                            Zcols[c] = 0;
+                            ans++;
+                        }
+                     }
                     }
                 }
-                for(int c = 0; c < r_size; c++){
-                    if(Zcols[c] == 1 && !markedCols[c]){
-                        markedRows[c] = true;
-                        //add to set?
-                        workFlag = true;
-                        printf("Marking row %d\n",c);
-                        currentZ = currentZ - Zrows[c];
-                        ans++;
-                    }
-                }
-                if(workFlag){
-                    for(int i = 0; i < Zcols.size(); i++){
-                        if(Zcols[i] > 1 && !markedCols[i] && currentZ > 0){
-                            markedCols[i] = true;
-                            printf("Marking col %d\n",i);
-                            currentZ = currentZ - Zcols[i];
-                            Zcols[i] = 0;
+                     /*
+                     for(int c = 0; c < x_size; c++){
+                        if(adj_matrix[r][c] == 0 && Zrows[r] == 1 && !markedCols[c] && !markedRows[r]){
+                            markedCols[c] = true;
+                            workFlag = true;
+                            printf("Marking col %d\n",r);
+                            currentZ = currentZ - Zcols[c];
+                            //Zrows[r]--;
+                        }
+                     }
+                     */
+                
+                //iterate cols checking for exactly one unmarked zero in an unmarked row.
+                for(int c = 0; c < x_size; c++){
+                    for(int r = 0; r < y_size; r++){
+                        if(adj_matrix[r][c] == 0 && Zcols[c] == 1 && !markedRows[r] && !markedCols[c]){
+                            for(int i = 0; i < x_size; i++) if(adj_matrix[r][i] == 0) Zcols[i]--;
+                            markedRows[r] = true;
+                            workFlag = true;
+                            zeroesFound = true;
+                            printf("Marking row %d\n",r);
                             ans++;
                         }
                     }
-                    for(int i = 0; i < Zrows.size(); i++){
-                        if(Zrows[i] > 1 && !markedRows[i] && currentZ > 0){
-                            markedCols[i] = true;
-                            printf("Marking row %d\n",i);
-                            currentZ = currentZ - Zrows[i];
-                            ans++;
-                        }
+                }
+                //FIX ME
+                if(!workFlag){
+                    for(int c = 0; c < x_size; c++){
+                      if(!markedCols[c]){
+                        for(int r = 0; r < y_size; r++){
+                            if(adj_matrix[r][c] == 0 && !markedRows[r]){
+                                if(Zrows[r] > Zrows[c]){
+                                    for(int i = 0; i < x_size; i++) if(adj_matrix[r][i] == 0) Zcols[i]--;
+                                    markedRows[r] = true;
+                                    ans++;
+                                    zeroesFound = true;
+                                    printf("Marking row: %d\n",r);
+                                } else {
+                                    for(int i = 0; i < y_size; i++) if(adj_matrix[i][c] == 0) Zrows[i]--;
+                                    markedCols[c] = true;
+                                    ans++;
+                                    zeroesFound = true;
+                                    printf("Marking col: %d\n",c);
+                                }
+                            }
+                          }
+                      }
                     }
                 }
             }
-            printf("%d\n",ans);
             return ans;
+        
         }
     };
 
@@ -184,17 +211,18 @@ vector<vector<float>> random_map_generator(int size, int max_distance){
 }
 
 int main(){
-    vector<vector<float>> map = {{1,2,3,4,5},
-                                 {3,1,6,9,2},
-                                 {7,2,4,12,5},
-                                 {8,5,7,3,7}};
+    vector<vector<float>> map = {{1,2,3,1,5,9},
+                                 {3,1,6,9,2,1},
+                                 {7,2,4,12,5,1},
+                                 {8,5,7,3,7,4},
+                                 {8,7,7,12,7,19}};
     graph g1 = graph(map);
     g1.printMatrix();
     g1.minimizeGraph();
     g1.printMatrix();
     g1.zeroCover();
 
-    printf("%d %d\n", g1.num_zeroes,g1.Zcols[1]);
+    printf("%d %d\n", g1.num_zeroes,g1.Zcols[0]);
 
     return 0;
 }
